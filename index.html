@@ -5,6 +5,7 @@
     {{ person.name }} -- {{ person.age }} <br>
     <h3 v-text="text"></h3><br>
     <div v-html="dom"></div>
+    <button v-on:click="alertMessage">Click me!</button>
   </div>
   
   <script src="mvue.js"></script>
@@ -17,7 +18,12 @@
           age: 26
         },
         text: 'Hello MVVM',
-        dom: '<p>v-html</p>'
+        dom: '<h1 style="color: red">v-html</h1>'
+      },
+      methods: {
+        alertMessage() {
+          alert('Hi!')
+        }
       }
     })
   </script>
