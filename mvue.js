@@ -37,6 +37,9 @@ class Compile {
         compileUtil[newDirectiveName](node, value, this.vm, eventName) // 根據不同的 directive 進行個別處理
         // 刪除 HTML 標籤上的 directive 符號
         node.removeAttribute('v-' + directiveName)
+      } else if (this.isEventAlias(name)) { // 處理事件綁定alias @click
+        let [, eventName] = name.split('@')
+        compileUtil['on'](node, value, this.vm, eventName)
       }
     })
   }
@@ -54,6 +57,9 @@ class Compile {
       fragment.appendChild(firstChild)
     }
     return fragment
+  }
+  isEventAlias (attrName) {
+    return attrName.includes('@')
   }
   // 判斷元素內的 attributes 是否包含 v- 關鍵字
   isDirective (attrName) {
@@ -87,8 +93,8 @@ const compileUtil = {
     this.updater.modelUpdater(node, value)
   },
   on(node, expr, vm, eventName) {
-    const callback = this.epxrHandler.getVal(expr, vm.$methods)
-    node.addEventListener(eventName, callback)
+    const callback = vm.$options && vm.$options.methods[expr]
+    node.addEventListener(eventName, callback.bind(vm), false) // 需重新指向this為vm，否則this指向為綁定事件的dom元素
   },
   epxrHandler: {
     // 有時可能會有 v-model="person.name" 這種物件的形式，若不做處理，this.$data['person.name'] 是沒辦法取到物件內的值的
@@ -117,7 +123,6 @@ class Mvue {
   constructor(options) {
     this.$el = options.el
     this.$data = options.data
-    this.$methods = options.methods
     this.$options = options
 
     if (this.$el) {

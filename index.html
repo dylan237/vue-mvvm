@@ -6,6 +6,7 @@
     <h3 v-text="text"></h3><br>
     <div v-html="dom"></div>
     <button v-on:click="alertMessage">Click me!</button>
+    <button @click="alertMessage">Click me!</button>
   </div>
   
   <script src="mvue.js"></script>
@@ -23,6 +24,7 @@
       methods: {
         alertMessage() {
           alert('Hi!')
+          console.log(this)
         }
       }
     })
