@@ -13,7 +13,6 @@ class Compile {
     // 1. 獲取子元素
     const childNodes = fragment.childNodes
     Array.from(childNodes).forEach( child => {
-
       if (this.isElementNode(child)) {
         // 是元素
         this.compileElement(child)
@@ -42,7 +41,11 @@ class Compile {
     })
   }
   compileText(node) {
-    
+    const nodeContent = node.textContent
+    const regexp = /\{\{(.+?)\}\}/g  // 驗證是否是 {{ }} 語法
+    if (regexp.test(nodeContent)) {
+      compileUtil['text'](node, nodeContent, this.vm)
+    }
   }
   node2Fragment (el) {
     let fragment = document.createDocumentFragment()
@@ -63,8 +66,16 @@ class Compile {
 }
 
 const compileUtil = {
-  text(node, expr, vm) { // node: 綁定 directive 的元素; expr: v-text="這裏的值"; vm: 實例，用來取得 expr 對應的 $data 內的資料
-    const value = this.epxrHandler.getVal(expr, vm.$data)
+  text(node, expr, vm) { // node: 綁定 directive 的元素 expr: v-text="這裏的值" vm: 實例，用來取得 expr 對應的 $data 內的資料
+    let value
+    if (expr.includes('{{')) {
+      value = expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
+        content = args[1].trim()
+        return this.epxrHandler.getVal(content, vm.$data)
+      })
+    } else {
+      value = this.epxrHandler.getVal(expr, vm.$data)
+    }
     this.updater.textUpdater(node, value)
   },
   html(node, expr, vm) {
@@ -85,7 +96,7 @@ const compileUtil = {
       // input: expr -> person.name, output -> 'Dylan'
       return expr.split('.').reduce((vmTarget, currentValue) => {
         return vmTarget[currentValue]
-      }, vmTarget);
+      }, vmTarget)
     }
   },
   // 更新方法

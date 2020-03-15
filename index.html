@@ -2,7 +2,7 @@
   <div id="app">
     <input type="text" v-model="person.name"><br>
     <input type="text" v-model="person.age"><br>
-    {{ person.name }} -- {{ person.age }} <br>
+    名字：{{ person.name }} -- 年齡：{{ person.age }}<br>
     <h3 v-text="text"></h3><br>
     <div v-html="dom"></div>
     <button v-on:click="alertMessage">Click me!</button>
