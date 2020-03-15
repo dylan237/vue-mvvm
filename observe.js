@@ -27,6 +27,7 @@ class Observe {
   * @param {Any} keyValue key 的值
   */
   defineReactive(data, key, keyValue) {
+    const that = this
     // 如果內部值是依然是物件時再次進行遍歷(遞歸)
     this.observe(keyValue)
     // 劫持數據(添加 getter setter)
@@ -37,10 +38,10 @@ class Observe {
         return keyValue
       },
       set(newVal) {
+        // 避免資料重新assign 成一個新物件時造成監聽失效，如：vm.$data.xxxx = {a: 1}，因此重新賦值時要在做一次監聽
+        that.observe(newVal)
         // 新舊值比對，若不同則自動更新
         if (newVal !== keyValue) {
-          console.log(newVal);
-          console.log(keyValue);
           keyValue = newVal
         }
       }
