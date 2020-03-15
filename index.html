@@ -2,13 +2,14 @@
   <div id="app">
     <input type="text" v-model="person.name"><br>
     <input type="text" v-model="person.age"><br>
-    名字：{{ person.name }} -- 年齡：{{ person.age }}<br>
-    <h3 v-text="text"></h3><br>
+    名字：{{ person.name }} -- 年齡：{{ person.age }}
+    <h3 v-text="text"></h3>
     <div v-html="dom"></div>
     <button v-on:click="alertMessage">Click me!</button>
     <button @click="alertMessage">Click me!</button>
   </div>
   
+  <script src="observe.js"></script>
   <script src="mvue.js"></script>
   <script>
     let vm = new Mvue({
@@ -16,7 +17,11 @@
       data: {
         person: {
           name: 'Dylan',
-          age: 26
+          age: 26,
+          family: {
+            dad: 'bob',
+            mom: 'molly'
+          }
         },
         text: 'Hello MVVM',
         dom: '<h1 style="color: red">v-html</h1>'

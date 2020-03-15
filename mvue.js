@@ -58,6 +58,7 @@ class Compile {
     }
     return fragment
   }
+  // 判斷元素內的 attributes 是否包含 @ 關鍵字
   isEventAlias (attrName) {
     return attrName.includes('@')
   }
@@ -127,10 +128,9 @@ class Mvue {
 
     if (this.$el) {
       // 1. 實現一個觀察者 observe
-
+      new Observe(this.$data)
       // 2. 實現一個指令解析器 compiler
       new Compile(this.$el, this)
     }
   }
-  
 }
