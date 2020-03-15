@@ -1,0 +1,24 @@
+<body>
+  <div id="app">
+    <input type="text" v-model="person.name"><br>
+    <input type="text" v-model="person.age"><br>
+    {{ person.name }} -- {{ person.age }} <br>
+    <h3 v-text="text"></h3><br>
+    <div v-html="dom"></div>
+  </div>
+  
+  <script src="mvue.js"></script>
+  <script>
+    let vm = new Mvue({
+      el: '#app',
+      data: {
+        person: {
+          name: 'Dylan',
+          age: 26
+        },
+        text: 'Hello MVVM',
+        dom: '<p>v-html</p>'
+      }
+    })
+  </script>
+</body>
