@@ -1,3 +1,41 @@
+// 監控新舊值有無變化
+class Watcher {
+  constructor(vm, expr, callback) {
+    this.vm = vm
+    this.expr = expr
+    this.callback = callback
+    this.oldVal = this.getOldVal()
+  }
+  getOldVal() {
+    Dep.target = this
+    const oldVal = compileUtil.epxrHandler.getVal(this.expr, this.vm)
+    Dep.target = null
+    return oldVal
+  }
+  update() {
+    const newVal = compileUtil.epxrHandler.getVal(this.expr, this.vm)
+    if (newVal !== this.oldVal) {
+      this.callback(newVal)
+    }
+  }
+}
+
+class Dep {
+  constructor() {
+    this.subs = []
+  }
+  // 收集watcher
+  addSub(watcher) {
+    this.subs.push(watcher)
+  }
+  // 通知更新
+  notify() {
+    this.subs.forEach(watcher => {
+      watcher.update()
+    })
+  }
+}
+
 class Observe {
   constructor(data) {
     this.observe(data)
@@ -13,7 +51,6 @@ class Observe {
   observe(data) {
     if (data && typeof data === 'object') {
       Object.keys(data).forEach(key => {
-        // console.log(key);
         this.defineReactive(data, key, data[key])
       })
     }
@@ -27,14 +64,18 @@ class Observe {
   * @param {Any} keyValue key 的值
   */
   defineReactive(data, key, keyValue) {
-    const that = this
     // 如果內部值是依然是物件時再次進行遍歷(遞歸)
     this.observe(keyValue)
+    
+    const that = this
+    
+    const dep = new Dep()
     // 劫持數據(添加 getter setter)
     Object.defineProperty(data, key, {
       enumerable: true,    // 是否可遍歷
       configurable: false, // 是否可更改
       get() {
+        Dep.target && dep.addSub(Dep.target)
         return keyValue
       },
       set(newVal) {
@@ -44,6 +85,7 @@ class Observe {
         if (newVal !== keyValue) {
           keyValue = newVal
         }
+        dep.notify()
       }
     })
   }

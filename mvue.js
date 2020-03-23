@@ -18,7 +18,7 @@ class Compile {
         this.compileElement(child)
       } else {
         // 是 {{}}
-        this.compileText(child)
+        this.compileMustache(child)
       }
 
       // 如果元素中還有子元素、再進行遞歸編譯
@@ -34,7 +34,7 @@ class Compile {
       if (this.isDirective(name)) { // name -> v-model v-on:click...
         const [, directiveName] = name.split('-') // directiveName -> model on:click...
         const [newDirectiveName, eventName] = directiveName.split(':') // 處理 on:click 字串，newDirectiveName ->  model on , eventName -> click
-        compileUtil[newDirectiveName](node, value, this.vm, eventName) // 根據不同的 directive 進行個別處理
+        compileUtil[newDirectiveName](node, value, this.vm,eventName) // 根據不同的 directive 進行個別處理
         // 刪除 HTML 標籤上的 directive 符號
         node.removeAttribute('v-' + directiveName)
       } else if (this.isEventAlias(name)) { // 處理事件綁定alias @click
@@ -43,7 +43,7 @@ class Compile {
       }
     })
   }
-  compileText(node) {
+  compileMustache(node) {
     const nodeContent = node.textContent
     const regexp = /\{\{(.+?)\}\}/g  // 驗證是否是 {{ }} 語法
     if (regexp.test(nodeContent)) {
@@ -73,24 +73,42 @@ class Compile {
 }
 
 const compileUtil = {
+  getContentVal(expr, vm) {
+    return expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
+      const content = args[1].trim()
+      return this.epxrHandler.getVal(content, vm)
+    })
+  },
   text(node, expr, vm) { // node: 綁定 directive 的元素 expr: v-text="這裏的值" vm: 實例，用來取得 expr 對應的 $data 內的資料
     let value
     if (expr.includes('{{')) {
       value = expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
-        content = args[1].trim()
-        return this.epxrHandler.getVal(content, vm.$data)
+        const content = args[1].trim()
+        new Watcher(vm, content, (newVal) => {
+          this.updater.textUpdater(node, this.getContentVal(expr, vm))
+        })
+        return this.epxrHandler.getVal(content, vm)
       })
     } else {
-      value = this.epxrHandler.getVal(expr, vm.$data)
+      value = this.epxrHandler.getVal(expr, vm)
+      new Watcher(vm, expr, (newVal) => {
+        this.updater.textUpdater(node, newVal)
+      })
     }
     this.updater.textUpdater(node, value)
   },
   html(node, expr, vm) {
-    const value = this.epxrHandler.getVal(expr, vm.$data)
+    const value = this.epxrHandler.getVal(expr, vm)
+    new Watcher(vm, expr, (newVal) => {
+      this.updater.htmlUpdater(node, newVal)
+    })
     this.updater.htmlUpdater(node, value)
   },
   model(node, expr, vm) {
-    const value = this.epxrHandler.getVal(expr, vm.$data)
+    const value = this.epxrHandler.getVal(expr, vm)
+    new Watcher(vm, expr, (newVal) => {
+      this.updater.modelUpdater(node, newVal)
+    })
     this.updater.modelUpdater(node, value)
   },
   on(node, expr, vm, eventName) {
@@ -99,11 +117,11 @@ const compileUtil = {
   },
   epxrHandler: {
     // 有時可能會有 v-model="person.name" 這種物件的形式，若不做處理，this.$data['person.name'] 是沒辦法取到物件內的值的
-    getVal(expr, vmTarget) {
+    getVal(expr, vm) {
       // input: expr -> person.name, output -> 'Dylan'
-      return expr.split('.').reduce((vmTarget, currentValue) => {
-        return vmTarget[currentValue]
-      }, vmTarget)
+      return expr.split('.').reduce((data, currentValue) => {
+        return data[currentValue]
+      }, vm.$data)
     }
   },
   // 更新方法
