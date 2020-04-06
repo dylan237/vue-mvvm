@@ -12,7 +12,7 @@ class Compile {
   compile(fragment) {
     // 1. 獲取子元素
     const childNodes = fragment.childNodes
-    Array.from(childNodes).forEach( child => {
+    Array.from(childNodes).forEach(child => {
       if (this.isElementNode(child)) {
         // 是元素
         this.compileElement(child)
@@ -29,12 +29,15 @@ class Compile {
   }
   compileElement(node) {
     const attrs = node.attributes
-    Array.from(attrs).forEach( attr => {
-      const { name, value } = attr // attr -> v-model="person.name"
+    Array.from(attrs).forEach(attr => {
+      const {
+        name,
+        value
+      } = attr // attr -> v-model="person.name"
       if (this.isDirective(name)) { // name -> v-model v-on:click...
         const [, directiveName] = name.split('-') // directiveName -> model on:click...
         const [newDirectiveName, eventName] = directiveName.split(':') // 處理 on:click 字串，newDirectiveName ->  model on , eventName -> click
-        compileUtil[newDirectiveName](node, value, this.vm,eventName) // 根據不同的 directive 進行個別處理
+        compileUtil[newDirectiveName](node, value, this.vm, eventName) // 根據不同的 directive 進行個別處理
         // 刪除 HTML 標籤上的 directive 符號
         node.removeAttribute('v-' + directiveName)
       } else if (this.isEventAlias(name)) { // 處理事件綁定alias @click
@@ -45,12 +48,12 @@ class Compile {
   }
   compileMustache(node) {
     const nodeContent = node.textContent
-    const regexp = /\{\{(.+?)\}\}/g  // 驗證是否是 {{ }} 語法
+    const regexp = /\{\{(.+?)\}\}/g // 驗證是否是 {{ }} 語法
     if (regexp.test(nodeContent)) {
       compileUtil['text'](node, nodeContent, this.vm)
     }
   }
-  node2Fragment (el) {
+  node2Fragment(el) {
     let fragment = document.createDocumentFragment()
     let firstChild
     while (firstChild = el.firstChild) {
@@ -59,15 +62,15 @@ class Compile {
     return fragment
   }
   // 判斷元素內的 attributes 是否包含 @ 關鍵字
-  isEventAlias (attrName) {
+  isEventAlias(attrName) {
     return attrName.includes('@')
   }
   // 判斷元素內的 attributes 是否包含 v- 關鍵字
-  isDirective (attrName) {
+  isDirective(attrName) {
     return attrName.startsWith('v-')
   }
   // 判斷是鬍鬚還是元素，是元素則回傳 true
-  isElementNode (node) {
+  isElementNode(node) {
     return node.nodeType === 1
   }
 }
@@ -109,6 +112,10 @@ const compileUtil = {
     new Watcher(vm, expr, (newVal) => {
       this.updater.modelUpdater(node, newVal)
     })
+    node.addEventListener('input', (e) => {
+      const newValue = e.target.value;
+      this.epxrHandler.setVal(expr, vm, newValue)
+    })
     this.updater.modelUpdater(node, value)
   },
   on(node, expr, vm, eventName) {
@@ -118,9 +125,19 @@ const compileUtil = {
   epxrHandler: {
     // 有時可能會有 v-model="person.name" 這種物件的形式，若不做處理，this.$data['person.name'] 是沒辦法取到物件內的值的
     getVal(expr, vm) {
+      console.log(expr);
       // input: expr -> person.name, output -> 'Dylan'
       return expr.split('.').reduce((data, currentValue) => {
         return data[currentValue]
+      }, vm.$data)
+    },
+    setVal(expr, vm, inputVal) {
+      return expr.split('.').reduce((prev, next, currentIndex) => {
+        console.log(next);
+        if (currentIndex === expr.split('.').length - 1) {
+          return prev[next] = inputVal;
+        }
+        return prev[next];
       }, vm.$data)
     }
   },
