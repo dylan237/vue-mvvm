@@ -166,6 +166,19 @@ class Mvue {
       new Observe(this.$data)
       // 2. 實現一個指令解析器 compiler
       new Compile(this.$el, this)
+      this.proxyData(this.$data)
+    }
+  }
+  proxyData(data) {
+    for (const key in data) {
+      Object.defineProperty(this, key, {
+        get() {
+          return data[key]
+        },
+        set(newVal) {
+          data[key] = newVal
+        }
+      })
     }
   }
 }
